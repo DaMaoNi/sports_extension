@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>直播吧节目单</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <header class="hdr">
+    <div class="hdr-left">
+      <span class="hdr-logo">8</span>
+      <div class="hdr-text">
+        <div class="hdr-name">直播吧节目单</div>
+        <div class="hdr-sub" id="updated"></div>
+      </div>
+    </div>
+    <button id="refreshBtn" class="icon-btn" type="button" title="刷新">&#8635;</button>
+  </header>
+
+  <div class="toolbar">
+    <button id="filterBtn" class="filter-btn" type="button">筛选 CCTV5</button>
+    <span id="count" class="count"></span>
+  </div>
+
+  <main id="list" class="list"></main>
+
+  <footer class="ftr">
+    <a href="https://www.zhibo8.com/" target="_blank" rel="noreferrer">打开直播吧官网</a>
+    <span class="ftr-tip">数据来源：zhibo8.com</span>
+  </footer>
+
+  <script src="popup.js"></script>
+</body>
+</html>

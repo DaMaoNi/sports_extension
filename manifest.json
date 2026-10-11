@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "直播吧节目单（CCTV5 筛选）",
+  "version": "1.0.0",
+  "description": "无需登录直播吧，直接在插件页面查看 zhibo8.com 的节目单，并一键筛选 CCTV5 的节目。",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "直播吧节目单"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "host_permissions": [
+    "*://www.zhibo8.com/*",
+    "*://zhibo8.com/*"
+  ]
+}
