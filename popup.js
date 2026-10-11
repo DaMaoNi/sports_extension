@@ -197,12 +197,6 @@ function itemView(it) {
   league.className = 'item-league';
   league.textContent = it.league;
   title.appendChild(league);
-  if (it.isCctv5) {
-    var badge = document.createElement('span');
-    badge.className = 'badge';
-    badge.textContent = 'CCTV5';
-    title.appendChild(badge);
-  }
   body.appendChild(title);
 
   if (it.teams) {

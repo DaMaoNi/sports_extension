@@ -192,15 +192,6 @@ body {
   color: #1f2329;
 }
 
-.badge {
-  font-size: 10px;
-  font-weight: 700;
-  color: #fff;
-  background: #e8442a;
-  border-radius: 4px;
-  padding: 1px 6px;
-}
-
 .item-teams {
   margin-top: 3px;
   font-size: 12.5px;

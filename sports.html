@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>直播吧节目单</title>
+  <style>
+    :root {
+      --blue: #1f7ae0;
+      --blue-dark: #0f5fbd;
+      --red: #e8442a;
+      --text: #1f2329;
+      --muted: #7a828c;
+      --line: #e6e8eb;
+      --bg: #f4f5f7;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------------- 顶栏 ---------------- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(15, 95, 189, 0.25);
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .logo {
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 22px; font-weight: 800;
+    }
+    .brand h1 { margin: 0; font-size: 18px; font-weight: 800; }
+    .brand .meta { margin: 2px 0 0; font-size: 12px; opacity: 0.85; }
+    .actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); }
+    .btn:disabled { opacity: 0.55; cursor: default; }
+    .btn.active { background: #fff; color: var(--blue-dark); border-color: #fff; }
+    .count {
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.16);
+      padding: 6px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* ---------------- 列表 ---------------- */
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 16px 16px 40px;
+    }
+    .day { margin-bottom: 18px; }
+    .day-title {
+      position: sticky;
+      top: 68px;
+      z-index: 10;
+      margin: 0;
+      padding: 8px 6px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #445;
+      background: linear-gradient(#f4f5f7 70%, rgba(244, 245, 247, 0));
+    }
+    .matches {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .match {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #f0f1f3;
+    }
+    .match:last-child { border-bottom: none; }
+    .match:hover { background: #fafbfc; }
+
+    .m-time {
+      flex: 0 0 52px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--blue);
+      font-variant-numeric: tabular-nums;
+      padding-top: 2px;
+    }
+    .m-main { flex: 1; min-width: 0; }
+    .m-league {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .m-teams {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+      font-size: 13.5px;
+      color: #4a5560;
+    }
+    .m-team { display: inline-flex; align-items: center; gap: 6px; }
+    .m-team img {
+      width: 20px; height: 20px;
+      object-fit: contain;
+      vertical-align: middle;
+    }
+    .m-vs { color: #b3b9c1; font-size: 12px; }
+
+    .m-channels { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+    .chan {
+      font-size: 11.5px;
+      color: #5a6570;
+      background: #f1f3f6;
+      border-radius: 4px;
+      padding: 2px 8px;
+    }
+    .chan.cctv5 { color: #fff; background: var(--red); }
+
+    /* ---------------- 状态 ---------------- */
+    .state {
+      text-align: center;
+      color: var(--muted);
+      padding: 60px 20px;
+      line-height: 1.9;
+    }
+    .state .sub { font-size: 12.5px; color: #9aa1aa; }
+    .state code {
+      background: #eceef1;
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-size: 12.5px;
+    }
+    .spinner {
+      width: 26px; height: 26px;
+      margin: 0 auto 12px;
+      border: 3px solid #d5dae1;
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    footer {
+      text-align: center;
+      color: #a0a7b0;
+      font-size: 12px;
+      padding: 0 16px 30px;
+    }
+    footer a { color: var(--blue); text-decoration: none; }
+
+    @media (max-width: 560px) {
+      .topbar { padding: 12px 14px; }
+      .brand h1 { font-size: 16px; }
+      .m-time { flex-basis: 44px; font-size: 13px; }
+      .day-title { top: 96px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">8</span>
+      <div>
+        <h1>直播吧节目单</h1>
+        <p class="meta" id="meta">数据来源：m.zhibo8.com</p>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="count" id="count">—</span>
+      <button type="button" class="btn" id="filterBtn">筛选 CCTV5</button>
+      <button type="button" class="btn" id="refreshBtn">刷新</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <div class="state"><div class="spinner"></div>正在加载节目单…</div>
+  </main>
+
+  <footer>
+    数据来自 <a href="https://m.zhibo8.com/" target="_blank" rel="noreferrer">直播吧（m.zhibo8.com）</a>，版权归直播吧所有，本页面仅用于展示。
+  </footer>
+
+  <script>
+  /*
+   * 独立版节目单页面（无需插件）
+   * ---------------------------------------------------------------
+   * 直接抓取 https://m.zhibo8.com/（该站点返回 Access-Control-Allow-Origin: *，
+   * 支持跨域）；桌面站 www.zhibo8.com 不开放跨域，因此这里用移动站。
+   * 解析 .saishi 日期分组 / .lists > li 单场比赛，默认只显示 CCTV5。
+   */
+  (function () {
+    'use strict';
+
+    var SOURCE_URL = 'https://m.zhibo8.com/';
+
+    var state = {
+      days: [],
+      filterCctv5: true, // 默认只显示 CCTV5
+      loading: false,
+      error: null,
+      updatedAt: null
+    };
+
+    function $(id) { return document.getElementById(id); }
+
+    function clean(s) { return (s || '').replace(/\s+/g, ' ').trim(); }
+
+    /* ---------------- 加载 ---------------- */
+
+    function load() {
+      state.loading = true;
+      state.error = null;
+      render();
+
+      fetch(SOURCE_URL + '?_t=' + Date.now(), { credentials: 'omit', cache: 'no-store' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('请求失败：HTTP ' + res.status);
+          return res.text();
+        })
+        .then(function (html) {
+          var days = parseDays(html);
+          if (!days.length) throw new Error('没有解析到节目单，页面结构可能已变化');
+          state.days = days;
+          state.updatedAt = new Date();
+        })
+        .catch(function (err) {
+          state.error = (err && err.message) ? err.message : String(err);
+        })
+        .then(function () {
+          state.loading = false;
+          render();
+        });
+    }
+
+    /* ---------------- 解析 ---------------- */
+
+    function parseDays(html) {
+      var doc = new DOMParser().parseFromString(html, 'text/html');
+      var days = [];
+      var blocks = doc.querySelectorAll('.saishi');
+
+      for (var b = 0; b < blocks.length; b++) {
+        var block = blocks[b];
+        var titleEl = block.querySelector('.g-title');
+        var lis = block.querySelectorAll('.lists > li');
+        var items = [];
+        for (var i = 0; i < lis.length; i++) {
+          var item = parseItem(lis[i]);
+          if (item) items.push(item);
+        }
+        if (!items.length) continue;
+        days.push({
+          title: clean(titleEl && titleEl.textContent),
+          date: titleEl ? (titleEl.getAttribute('formatDate') || '') : '',
+          items: items
+        });
+      }
+      return days;
+    }
+
+    function parseItem(li) {
+      var time = clean(query(li, '.time'));
+      var league = clean(query(li, '.s_name'));
+      var channels = clean(query(li, '.s_keywords'));
+      var left = clean(query(li, '.left-team .team-name'));
+      var right = clean(query(li, '.right-team .team-name'));
+      if (!time && !league && !left && !right) return null;
+
+      return {
+        time: time,
+        league: league,
+        channels: channels,
+        left: left,
+        right: right,
+        logoLeft: logo(query(li, '.left-team img')),
+        logoRight: logo(query(li, '.right-team img')),
+        isCctv5: channels.toUpperCase().indexOf('CCTV5') !== -1
+      };
+    }
+
+    function query(root, sel) {
+      var el = root.querySelector(sel);
+      return el ? el.textContent : '';
+    }
+
+    function logo(img) {
+      if (!img) return '';
+      var src = img.getAttribute('data-original') || img.getAttribute('src') || '';
+      if (!src || src.indexOf('data:') === 0) return '';
+      if (src.indexOf('//') === 0) src = 'https:' + src;
+      return src;
+    }
+
+    /* ---------------- 渲染 ---------------- */
+
+    function render() {
+      var app = $('app');
+      var filterBtn = $('filterBtn');
+      var countEl = $('count');
+
+      filterBtn.textContent = state.filterCctv5 ? '显示全部节目' : '筛选 CCTV5';
+      filterBtn.className = 'btn' + (state.filterCctv5 ? ' active' : '');
+      filterBtn.disabled = state.loading || !!state.error;
+      $('refreshBtn').disabled = state.loading;
+
+      app.textContent = '';
+
+      if (state.loading) {
+        app.appendChild(stateBlock(true, '正在加载节目单…'));
+        countEl.textContent = '加载中';
+        return;
+      }
+
+      if (state.error) {
+        app.appendChild(errorBlock(state.error));
+        countEl.textContent = '加载失败';
+        return;
+      }
+
+      var total = 0;
+      var shownDays = 0;
+      for (var d = 0; d < state.days.length; d++) {
+        var day = state.days[d];
+        var items = state.filterCctv5
+          ? day.items.filter(function (it) { return it.isCctv5; })
+          : day.items;
+        if (!items.length) continue;
+        shownDays++;
+        total += items.length;
+        app.appendChild(dayBlock(day, items));
+      }
+
+      if (!total) {
+        app.appendChild(stateBlock(false, state.filterCctv5 ? '当前没有 CCTV5 的节目' : '暂无节目'));
+      }
+
+      countEl.textContent = state.filterCctv5
+        ? 'CCTV5：' + total + ' 场 / ' + shownDays + ' 天'
+        : '共 ' + total + ' 场 / ' + shownDays + ' 天';
+
+      $('meta').textContent = state.updatedAt
+        ? '数据来源：m.zhibo8.com · 更新于 ' + fmtTime(state.updatedAt)
+        : '数据来源：m.zhibo8.com';
+    }
+
+    function dayBlock(day, items) {
+      var section = document.createElement('section');
+      section.className = 'day';
+
+      var h = document.createElement('h2');
+      h.className = 'day-title';
+      h.textContent = day.title || day.date;
+      section.appendChild(h);
+
+      var ul = document.createElement('ul');
+      ul.className = 'matches';
+      for (var i = 0; i < items.length; i++) {
+        ul.appendChild(matchBlock(items[i]));
+      }
+      section.appendChild(ul);
+      return section;
+    }
+
+    function matchBlock(it) {
+      var li = document.createElement('li');
+      li.className = 'match';
+
+      var time = document.createElement('div');
+      time.className = 'm-time';
+      time.textContent = it.time || '--:--';
+      li.appendChild(time);
+
+      var main = document.createElement('div');
+      main.className = 'm-main';
+
+      var league = document.createElement('div');
+      league.className = 'm-league';
+      var name = document.createElement('span');
+      name.textContent = it.league || '';
+      league.appendChild(name);
+      main.appendChild(league);
+
+      if (it.left || it.right) {
+        var teams = document.createElement('div');
+        teams.className = 'm-teams';
+        if (it.left) teams.appendChild(teamEl(it.left, it.logoLeft));
+        if (it.left && it.right) {
+          var vs = document.createElement('span');
+          vs.className = 'm-vs';
+          vs.textContent = 'vs';
+          teams.appendChild(vs);
+        }
+        if (it.right) teams.appendChild(teamEl(it.right, it.logoRight));
+        main.appendChild(teams);
+      }
+
+      var chans = channels(it.channels);
+      if (chans.length) {
+        var box = document.createElement('div');
+        box.className = 'm-channels';
+        for (var i = 0; i < chans.length; i++) {
+          var c = document.createElement('span');
+          var isC = chans[i].toUpperCase().indexOf('CCTV5') !== -1;
+          c.className = 'chan' + (isC ? ' cctv5' : '');
+          c.textContent = chans[i];
+          box.appendChild(c);
+        }
+        main.appendChild(box);
+      }
+
+      li.appendChild(main);
+
+      return li;
+    }
+
+    function teamEl(name, logoSrc) {
+      var span = document.createElement('span');
+      span.className = 'm-team';
+      if (logoSrc) {
+        var img = document.createElement('img');
+        img.src = logoSrc;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.addEventListener('error', function () { img.remove(); });
+        span.appendChild(img);
+      }
+      var txt = document.createElement('span');
+      txt.textContent = name;
+      span.appendChild(txt);
+      return span;
+    }
+
+    function channels(raw) {
+      if (!raw) return [];
+      return raw.split(/\s+/).filter(Boolean);
+    }
+
+    function stateBlock(withSpinner, msg) {
+      var div = document.createElement('div');
+      div.className = 'state';
+      if (withSpinner) {
+        var sp = document.createElement('div');
+        sp.className = 'spinner';
+        div.appendChild(sp);
+      }
+      div.appendChild(document.createTextNode(msg));
+      return div;
+    }
+
+    function errorBlock(msg) {
+      var div = document.createElement('div');
+      div.className = 'state';
+      var p = document.createElement('div');
+      p.textContent = '无法加载节目单：' + msg;
+      div.appendChild(p);
+      var sub = document.createElement('div');
+      sub.className = 'sub';
+      sub.innerHTML =
+        '请确认网络可访问 <code>https://m.zhibo8.com/</code>。<br>' +
+        '若直接用浏览器打开本文件被拦截，可放到本地服务器再打开，例如在文件所在目录运行 ' +
+        '<code>python -m http.server</code>，然后访问 <code>http://localhost:8000/sports.html</code>。';
+      div.appendChild(sub);
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn active';
+      btn.style.marginTop = '14px';
+      btn.textContent = '重试';
+      btn.addEventListener('click', load);
+      div.appendChild(btn);
+      return div;
+    }
+
+    function fmtTime(date) {
+      var pad = function (n) { return n < 10 ? '0' + n : '' + n; };
+      return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+    }
+
+    /* ---------------- 事件 ---------------- */
+
+    document.addEventListener('DOMContentLoaded', function () {
+      $('refreshBtn').addEventListener('click', load);
+      $('filterBtn').addEventListener('click', function () {
+        state.filterCctv5 = !state.filterCctv5;
+        render();
+      });
+      load();
+    });
+  })();
+  </script>
+</body>
+</html>
